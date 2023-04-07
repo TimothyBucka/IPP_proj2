@@ -9,10 +9,11 @@ class Program:
         self.instram = instream
         self.instructions = []
         self.nof_instructions = 0
-        self.labels = {} # {label_name: index in self.instructions}
-        self.gf = Frame()
-        self.lfs = []
-        self.tfs = []
+        self.labels = {}    # {label_name: index in self.instructions}
+        self.call_stack = []
+        self.gf = Frame()   # always exists
+        self.lfs = []   # at the beginning is empty
+        self.tf = None  # at the beginning it does not exist
     
     def parse_XML(self, source_file):
         try:
@@ -146,3 +147,4 @@ class Program:
                 instr_num += 1
             else:   # jump to label
                 instr_num = next_num
+        print(self.tf.data)
