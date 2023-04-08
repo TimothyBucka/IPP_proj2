@@ -58,6 +58,11 @@ class Program:
                 if arg.attrib.get("type") == None:
                     Error.print_error(Error.XML_format, "Invalid argument attributes")
                 args.append(Argument(int(arg.tag[-1]), arg.attrib.get("type"), arg.text))
+
+            # 1 arg needed and got arg2 or arg3 instead of arg1
+            if sum([a.order for a in args]) != sum([i for i in range(1, len(args) + 1)]):
+                Error.print_error(Error.XML_structure, "Invalid arguments")
+
             args.sort(key=lambda x: x.order)
 
             # check for duplicate order of arguments

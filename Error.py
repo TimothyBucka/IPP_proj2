@@ -8,7 +8,7 @@ class Error:
     XML_format = 31       # invalid XML format
     XML_structure = 32    # invalid XML structure (wrong order etc)
     semantic = 52         # udefined label, redefined variable, etc
-    operands = 53         # invalid operands
+    operands = 53         # invalid operands types
     variable = 54         # non-existing variable
     frame = 55            # non-existing frame
     missing_value = 56    # missing value in variable or on stack

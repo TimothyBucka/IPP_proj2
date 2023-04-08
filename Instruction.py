@@ -31,12 +31,12 @@ class Instruction:
         # if constant
         if symb.type != "var":
             if symb.type == "int":
-                return int(symb.text), "int"
+                return [int(symb.text), "int"]
             elif symb.type == "bool":
                 if symb.text == "true":
-                    return True, "bool"
+                    return [True, "bool"]
                 elif symb.text == "false":
-                    return False, "bool"
+                    return [False, "bool"]
             elif symb.type == "string":
                 new_string = ""
                 for s in symb.text.split("\\"):
@@ -44,11 +44,11 @@ class Instruction:
                         n = chr(int(s[0:3]))
                         s = n+s[3:]
                     new_string += s
-                return new_string, "string"
+                return [new_string, "string"]
             elif symb.type == "nil":
-                return None, "nil"
+                return [None, "nil"]
             elif symb.type == "float":
-                return float.fromhex(symb.text), "float"
+                return [float.fromhex(symb.text), "float"]
         # if variable
         else:
             frame, name = self.split_frame_name(symb.text)
@@ -146,44 +146,131 @@ class Instruction:
 
     ################## Arithmetic, boolean and convertion operations ##################
     def ADD(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "int" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " ADD: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] + val2[0], "int", program.gf, program.lfs, program.tf)
 
     def SUB(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "int" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " SUB: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] - val2[0], "int", program.gf, program.lfs, program.tf)
 
     def MUL(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "int" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " MUL: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] * val2[0], "int", program.gf, program.lfs, program.tf)
 
     def IDIV(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "int" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " IDIV: Wrong type of arguments")
+        if val2[0] == 0:
+            Error.print_error(Error.type, "line " + str(self.order) + " IDIV: Division by zero")
+        self.store_value_to_variable(self.args[0], int(val1[0] / val2[0]), "int", program.gf, program.lfs, program.tf)
 
     def LT(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if (val1[1] not in ["int", "bool", "string"] or val2[1] not in ["int", "bool", "string"]) or (val1[1] != val2[1]):
+            Error.print_error(Error.operands, "line " + str(self.order) + " LT: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] < val2[0], "bool", program.gf, program.lfs, program.tf)
     
     def GT(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if (val1[1] not in ["int", "bool", "string"] or val2[1] not in ["int", "bool", "string"]) or (val1[1] != val2[1]):
+            Error.print_error(Error.operands, "line " + str(self.order) + " GT: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] > val2[0], "bool", program.gf, program.lfs, program.tf)
 
     def EQ(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if (val1[1] not in ["int", "bool", "string"] or val2[1] not in ["int", "bool", "string"]) or (val1[1] != val2[1]):
+            Error.print_error(Error.operands, "line " + str(self.order) + " EQ: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] == val2[0], "bool", program.gf, program.lfs, program.tf)
 
     def AND(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "bool" or val2[1] != "bool":
+            Error.print_error(Error.operands, "line " + str(self.order) + " AND: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] and val2[0], "bool", program.gf, program.lfs, program.tf)
 
     def OR(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "bool" or val2[1] != "bool":
+            Error.print_error(Error.operands, "line " + str(self.order) + " OR: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] or val2[0], "bool", program.gf, program.lfs, program.tf)
 
     def NOT(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        if val1[1] != "bool":
+            Error.print_error(Error.operands, "line " + str(self.order) + " NOT: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], not val1[0], "bool", program.gf, program.lfs, program.tf)
 
     def INT2CHAR(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        if val1[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " INT2CHAR: Wrong type of arguments")
+        try:
+            self.store_value_to_variable(self.args[0], chr(val1[0]), "string", program.gf, program.lfs, program.tf)
+        except ValueError:
+            Error.print_error(Error.operands, "line " + str(self.order) + " INT2CHAR: Cant convert int to char. Int out of range")
 
     def STRI2INT(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "string" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " STRI2INT: Wrong type of arguments")
+        try:
+            char = val1[0][val2[0]]
+        except IndexError:
+            Error.print_error(Error.string, "line " + str(self.order) + " STRI2INT: Index out of range")
+        self.store_value_to_variable(self.args[0], ord(char), "int", program.gf, program.lfs, program.tf) 
 
     ########################### Input and output operations ###########################
     def READ(self, program):
-        pass
+        # check if variable is defined by trying to store value to it
+        self.store_value_to_variable(self.args[0], None, None, program.gf, program.lfs, program.tf)
+
+        in_type = self.args[1].text
+        # check type before input
+        if in_type not in ["int", "bool", "string", "float"]:
+            Error.print_error(Error.type, "line " + str(self.order) + " READ: Invalid type argument")
+        
+        in_val = input()
+        if in_type == "int":
+            try:
+                in_val = int(in_val)
+            except ValueError:
+                self.store_value_to_variable(self.args[0], None, "nil", program.gf, program.lfs, program.tf)
+                return
+        elif in_type == "bool":
+            if in_val.lower() == "true":
+                in_val = True
+            else:
+                in_val = False
+        elif in_type == "string":
+            pass
+        elif in_type == "float":
+            try:
+                in_val = float(in_val)
+            except ValueError:
+                try:
+                    in_val = float.fromhex(in_val)
+                except ValueError:
+                    self.store_value_to_variable(self.args[0], None, "nil", program.gf, program.lfs, program.tf)
+                    return
+
+        self.store_value_to_variable(self.args[0], in_val, in_type, program.gf, program.lfs, program.tf)
 
     def WRITE(self, program):
         pass
@@ -220,6 +307,7 @@ class Instruction:
         
         val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
         val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+
         if (val1[1] != val2[1]) and (val1[1] != "nil" and val2[1] != "nil"):
             Error.print_error(Error.operands, "line " + str(self.order) + " JUMPIFEQ: Invalid operands")
         if val1 == val2:
