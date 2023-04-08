@@ -9,9 +9,9 @@ class Error:
     XML_structure = 32    # invalid XML structure (wrong order etc)
     semantic = 52         # udefined label, redefined variable, etc
     operands = 53         # invalid operands
-    varible = 54          # non-existing variable
+    variable = 54         # non-existing variable
     frame = 55            # non-existing frame
-    missing_value = 56    # missing value in varible or on stack
+    missing_value = 56    # missing value in variable or on stack
     type = 57             # divison by zero, invalid exit code, etc
     string = 58           # invalid string operation
     internal = 99

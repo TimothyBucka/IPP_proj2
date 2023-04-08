@@ -2,7 +2,7 @@ from Error import Error
 
 class Frame:
     def __init__(self) -> None:
-        self.data = {}  # {name: value (string)}, float is represented as hex string
+        self.data = {}  # {name: [value, type]} - type: None if not initialized, nil if nil
     
     def add_variable(self, var):
         if self.data.get(var) != None:

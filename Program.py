@@ -11,6 +11,7 @@ class Program:
         self.nof_instructions = 0
         self.labels = {}    # {label_name: index in self.instructions}
         self.call_stack = []
+        self.data_stack = []   # [[value, type], ...]
         self.gf = Frame()   # always exists
         self.lfs = []   # at the beginning is empty
         self.tf = None  # at the beginning it does not exist
@@ -76,11 +77,11 @@ class Program:
 
         # add correct order to instructions and create labels dictionary
         for i in range(self.nof_instructions):
-            self.instructions[i].order = i+1
+            self.instructions[i].order = i
             if self.instructions[i].opcode == "LABEL":
                 if self.labels.get(self.instructions[i].args[0].text) != None:
-                    Error.print_error(Error.XML_structure, "Duplicate label")
-                self.labels[self.instructions[i].args[0].text] = i+1
+                    Error.print_error(Error.semantic, "Duplicate label")
+                self.labels[self.instructions[i].args[0].text] = i
 
     def check_instruction_args(self, instruction):
         rules = {
@@ -142,9 +143,18 @@ class Program:
     def run(self):
         instr_num = 0
         while instr_num < self.nof_instructions:
+            print("--------" + str(instr_num) + ": " + self.instructions[instr_num].opcode + "-----------")
             next_num = self.instructions[instr_num].run(self)
-            if next_num == -1:
-                instr_num += 1
-            else:   # jump to label
+            if next_num != None:  # change flow of execution (jump)
                 instr_num = next_num
-        print(self.tf.data)
+            instr_num += 1
+            print("Call stack: ")
+            print(self.call_stack)
+            print("Labels: ")
+            print(self.labels)
+            print("GF:")
+            print(self.gf)
+            print("TF:")
+            print(self.tf)
+            print("LFS:")
+            print(self.lfs)
