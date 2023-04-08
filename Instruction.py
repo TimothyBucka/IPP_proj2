@@ -4,6 +4,9 @@ from Frame import Frame
 import sys
 
 class Instruction:
+    # static variables
+    called_instructions = 0
+
     def __init__(self, order, opcode, args) -> None:
         self.order = order
         self.opcode = opcode
@@ -11,12 +14,14 @@ class Instruction:
         self.nof_args = len(args)
     
     def run(self, program): # will return index of next instruction
+        type(self).called_instructions += 1
+
         try:
             func = getattr(self, self.opcode)
         except AttributeError:
             Error.print_error(Error.semantic, "line " + str(self.order) + ": Unknown opcode")
         next_step = func(program)
-        
+
         return next_step
 
 
@@ -44,6 +49,8 @@ class Instruction:
                         n = chr(int(s[0:3]))
                         s = n+s[3:]
                     new_string += s
+                    for key, value in {"&lt;": "<", "&gt;": ">", "&amp;": "&"}.items():
+                        new_string = new_string.replace(key, value)
                 return [new_string, "string"]
             elif symb.type == "nil":
                 return [None, "nil"]
@@ -78,10 +85,14 @@ class Instruction:
         elif frame == "LF":
             if (len(lfs) == 0):
                 Error.print_error(Error.frame, "line " + str(self.order) + ": LF stack is empty")
+            elif lfs[-1].data.get(name) == None:
+                Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
             lfs[-1].data[name] = [value, type]
         elif frame == "TF":
             if tf == None:
                 Error.print_error(Error.frame, "line " + str(self.order) + ": TF is uninitialized")
+            elif tf.data.get(name) == None:
+                Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
             tf.data[name] = [value, type]
 
     ################################# Frames and stack #################################
@@ -246,7 +257,12 @@ class Instruction:
         if in_type not in ["int", "bool", "string", "float"]:
             Error.print_error(Error.type, "line " + str(self.order) + " READ: Invalid type argument")
         
-        in_val = input()
+        try:
+            in_val = input()
+        except EOFError:
+            self.store_value_to_variable(self.args[0], None, "nil", program.gf, program.lfs, program.tf)
+            return
+        
         if in_type == "int":
             try:
                 in_val = int(in_val)
@@ -273,11 +289,23 @@ class Instruction:
         self.store_value_to_variable(self.args[0], in_val, in_type, program.gf, program.lfs, program.tf)
 
     def WRITE(self, program):
-        pass
+        val = self.get_value_from_symb(self.args[0], program.gf, program.lfs, program.tf)
+        s = val[0]
+
+        if val[1] == "bool":
+            if s:
+                s = "true"
+            else:
+                s = "false"
+        elif val[1] == "nil" or val[1] == None:
+            s = ""
+        
+        print(s, end="")
+
 
     ################################ String operations ################################
     def CONCAT(self, program):
-        pass
+        pass # TODO
 
     def STRLEN(self, program):
         pass
@@ -290,7 +318,11 @@ class Instruction:
 
     ##################################### Type  #####################################
     def TYPE(self, program):
-        pass
+        val = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        if val[1] == None: # variable not initialized
+            self.store_value_to_variable(self.args[0], "", "string", program.gf, program.lfs, program.tf)
+        else:
+            self.store_value_to_variable(self.args[0], val[1], "string", program.gf, program.lfs, program.tf)
 
     ################################## Flow control ##################################
     def LABEL(self, program):
@@ -334,13 +366,47 @@ class Instruction:
 
     #################################### Debugging ####################################
     def DPRINT(self, program):
-        pass
+        val = self.get_value_from_symb(self.args[0], program.gf, program.lfs, program.tf)
+        s = val[0]
+        if val[1] == "bool":
+            if s:
+                s = "true"
+            else:
+                s = "false"
+        elif val[1] == "nil":
+            s = "nil"
+        elif val[1] == None:
+            s = "%UNINITIALIZED%"
+
+        print("--- DPRINT: ", end="", file=sys.stderr)
+        if self.args[0].type == "var":
+            print(self.args[0].text + ": ", end="", file=sys.stderr)
+        print(s, end="", file=sys.stderr)
+        print(" ---", file=sys.stderr)
     
     def BREAK(self, program):
-        pass
+        print("\n--- BREAK ---", file=sys.stderr)
+        print(f"Instruction order: {self.order}", file=sys.stderr)
+        print(f"Number of run instructions: {type(self).called_instructions}", file=sys.stderr)
+        print("GF:", file=sys.stderr)
+        print(program.gf, file=sys.stderr)
+        print("LFs:", file=sys.stderr)
+        print("[", file=sys.stderr)
+        for i in range(len(program.lfs)-1, -1, -1):
+            print(f"LF{i}: ", end="", file=sys.stderr)
+            print(program.lfs[i], end="", file=sys.stderr)
+            if i != 0:
+                print(",", end="", file=sys.stderr)
+            print(file=sys.stderr)
+            i += 1
+        print("]", file=sys.stderr)
+        print("TF:", file=sys.stderr)
+        print(program.tf, file=sys.stderr)
+        print("--- ----- ---\n", file=sys.stderr)
+
 
     def __repr__(self) -> str:
-        str = f"{self.order} -- {self.opcode}"
+        s = f"{self.order} -- {self.opcode}"
         for arg in self.args:
-            str += f"\n\t{arg.order} {arg.type} {arg.text}"
-        return str+"\n"
+            s += f"\n\t{arg.order} {arg.type} {arg.text}"
+        return s+"\n"

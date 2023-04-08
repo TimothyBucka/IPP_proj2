@@ -2,11 +2,11 @@ from Argument import Argument
 from Error import Error
 from Frame import Frame
 from Instruction import Instruction
+import sys
 import xml.etree.ElementTree as ET
 
 class Program:
     def __init__(self, instream) -> None:
-        self.instram = instream
         self.instructions = []
         self.nof_instructions = 0
         self.labels = {}    # {label_name: index in self.instructions}
@@ -15,6 +15,8 @@ class Program:
         self.gf = Frame()   # always exists
         self.lfs = []   # at the beginning is empty
         self.tf = None  # at the beginning it does not exist
+
+        sys.stdin = instream
     
     def parse_XML(self, source_file):
         try:
@@ -74,7 +76,8 @@ class Program:
                 self.instructions.append(instruction)
         
         # check for duplicate order of instructions
-        if len([i.order for i in self.instructions]) != len(set([i.order for i in self.instructions])):
+        order_list = [i.order for i in self.instructions]
+        if len(order_list) != len(set(order_list)):
             Error.print_error(Error.XML_structure, "Invalid instruction order")
         self.instructions.sort(key=lambda x: x.order)
 
@@ -148,18 +151,7 @@ class Program:
     def run(self):
         instr_num = 0
         while instr_num < self.nof_instructions:
-            print("--------" + str(instr_num) + ": " + self.instructions[instr_num].opcode + "-----------")
             next_num = self.instructions[instr_num].run(self)
             if next_num != None:  # change flow of execution (jump)
                 instr_num = next_num
             instr_num += 1
-            print("Call stack: ")
-            print(self.call_stack)
-            print("Labels: ")
-            print(self.labels)
-            print("GF:")
-            print(self.gf)
-            print("TF:")
-            print(self.tf)
-            print("LFS:")
-            print(self.lfs)
