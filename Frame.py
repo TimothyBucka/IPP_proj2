@@ -8,13 +8,17 @@ class Frame:
     def add_variable(self, var):
         if self.data.get(var) != None:
             Error.print_error(Error.semantic, "Variable already exists")
-        self.data[var] = None
+        self.data[var] = [None, None]
 
     def get_variable(self, var):
-        pass
+        if self.data.get(var) == None:
+            Error.print_error(Error.variable, "Variable does not exist")
+        return self.data[var]
 
-    def set_variable(self, var, value):
-        pass
+    def set_variable(self, var, value, type):
+        if self.data.get(var) == None:
+            Error.print_error(Error.variable, "Variable does not exist")
+        self.data[var] = [value, type]
 
     def __repr__(self) -> str:
         s = "{\n"

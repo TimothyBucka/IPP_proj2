@@ -24,7 +24,6 @@ class Instruction:
 
         return next_step
 
-
     def split_frame_name(self, variable):
         frame = variable.split("@")[0]
         name = variable.split("@")[1]
@@ -36,7 +35,10 @@ class Instruction:
         # if constant
         if symb.type != "var":
             if symb.type == "int":
-                return [int(symb.text), "int"]
+                try:
+                    return [int(symb.text), "int"]
+                except ValueError:
+                    Error.print_error(Error.XML_structure, "line " + str(self.order) + ": Invalid int value")
             elif symb.type == "bool":
                 if symb.text == "true":
                     return [True, "bool"]
@@ -55,49 +57,46 @@ class Instruction:
             elif symb.type == "nil":
                 return [None, "nil"]
             elif symb.type == "float":
-                return [float.fromhex(symb.text), "float"]
+                try:
+                    return [float(symb.text), "float"]
+                except ValueError:
+                    try:
+                        return [float.fromhex(symb.text), "float"]
+                    except ValueError:
+                        Error.print_error(Error.XML_structure, "line " + str(self.order) + ": Invalid float value")
+                    
         # if variable
         else:
             frame, name = self.split_frame_name(symb.text)
             if frame == "GF":
-                if gf.data.get(name) == None:
-                    Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-                return gf.data[name]
+                return gf.get_variable(name)
             elif frame == "LF":
                 if (len(lfs) == 0):
                     Error.print_error(Error.frame, "line " + str(self.order) + ": LF stack is empty")
-                elif lfs[-1].data.get(name) == None:
-                    Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-                return lfs[-1].data[name]
+                return lfs[-1].get_variable(name)
             elif frame == "TF":
                 if tf == None:
                     Error.print_error(Error.frame, "line " + str(self.order) + ": TF is uninitialized")
-                elif tf.data.get(name) == None:
-                    Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-                return tf.data[name]
+                return tf.get_variable(name)
         
     def store_value_to_variable(self, variable, value, type, gf, lfs, tf):
         frame, name = self.split_frame_name(variable.text)
         if frame == "GF":
-            if gf.data.get(name) == None:
-                Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-            gf.data[name] = [value, type]
+            gf.set_variable(name, value, type)
         elif frame == "LF":
             if (len(lfs) == 0):
                 Error.print_error(Error.frame, "line " + str(self.order) + ": LF stack is empty")
-            elif lfs[-1].data.get(name) == None:
-                Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-            lfs[-1].data[name] = [value, type]
+            lfs[-1].set_variable(name, value, type)
         elif frame == "TF":
             if tf == None:
                 Error.print_error(Error.frame, "line " + str(self.order) + ": TF is uninitialized")
-            elif tf.data.get(name) == None:
-                Error.print_error(Error.variable, "line " + str(self.order) + ": Variable does not exist")
-            tf.data[name] = [value, type]
+            tf.set_variable(name, value, type)
 
     ################################# Frames and stack #################################
     def MOVE(self, program):
         value, type = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        if type == None:
+            Error.print_error(Error.missing_value, "Variable not initialized")
         self.store_value_to_variable(self.args[0], value, type, program.gf, program.lfs, program.tf)
     
     def CREATEFRAME(self, program):
@@ -117,21 +116,15 @@ class Instruction:
     def DEFVAR(self, program):
         frame, name = self.split_frame_name(self.args[0].text)
         if frame == "GF":
-            if program.gf.data.get(name) != None:
-                Error.print_error(Error.semantic, "line " + str(self.order) + " DEFVAR: Variable already exists")
-            program.gf.data[name] = [None, None]
+            program.gf.add_variable(name)
         elif frame == "LF":
             if (len(program.lfs) == 0):
                 Error.print_error(Error.frame, "LF stack is empty")
-            if program.lfs[-1].data.get(name) != None:
-                Error.print_error(Error.semantic, "line " + str(self.order) + " DEFVAR: Variable already exists")
-            program.lfs[-1].data[name] = [None, None]
+            program.lfs[-1].add_variable(name)
         elif frame == "TF":
             if program.tf == None:
                 Error.print_error(Error.frame, "line " + str(self.order) + " DEFVAR: TF is uninitialized")
-            if program.tf.data.get(name) != None:
-                Error.print_error(Error.semantic, "line " + str(self.order) + " DEFVAR: Variable already exists")
-            program.tf.data[name] = [None, None]
+            program.tf.add_variable(name)
 
     def CALL(self, program):
         if program.labels.get(self.args[0].text) == None:
@@ -147,6 +140,8 @@ class Instruction:
     #################################### Data stack ####################################
     def PUSHS(self, program):
         value, type = self.get_value_from_symb(self.args[0], program.gf, program.lfs, program.tf)
+        if type == None:
+            Error.print_error(Error.missing_value, "Variable not initialized")
         program.data_stack.append([value, type])
 
     def POPS(self, program):
@@ -234,7 +229,7 @@ class Instruction:
         try:
             self.store_value_to_variable(self.args[0], chr(val1[0]), "string", program.gf, program.lfs, program.tf)
         except ValueError:
-            Error.print_error(Error.operands, "line " + str(self.order) + " INT2CHAR: Cant convert int to char. Int out of range")
+            Error.print_error(Error.string, "line " + str(self.order) + " INT2CHAR: Cant convert int to char. Int out of range")
 
     def STRI2INT(self, program):
         val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
@@ -305,16 +300,44 @@ class Instruction:
 
     ################################ String operations ################################
     def CONCAT(self, program):
-        pass # TODO
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "string" or val2[1] != "string":
+            Error.print_error(Error.operands, "line " + str(self.order) + " CONCAT: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], val1[0] + val2[0], "string", program.gf, program.lfs, program.tf)
 
     def STRLEN(self, program):
-        pass
+        val = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        if val[1] != "string":
+            Error.print_error(Error.operands, "line " + str(self.order) + " STRLEN: Wrong type of arguments")
+        self.store_value_to_variable(self.args[0], len(val[0]), "int", program.gf, program.lfs, program.tf)
 
     def GETCHAR(self, program):
-        pass
+        val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+        if val1[1] != "string" or val2[1] != "int":
+            Error.print_error(Error.operands, "line " + str(self.order) + " GETCHAR: Wrong type of arguments")
+        try:
+            self.store_value_to_variable(self.args[0], val1[0][val2[0]], "string", program.gf, program.lfs, program.tf)
+        except IndexError:
+            Error.print_error(Error.string, "line " + str(self.order) + " GETCHAR: Index out of range")
 
     def SETCHAR(self, program):
-        pass
+        var_string = self.get_value_from_symb(self.args[0], program.gf, program.lfs, program.tf)
+        var_index = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
+        var_char = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)
+
+        if var_string[1] != "string" or var_index[1] != "int" or var_char[1] != "string":
+            Error.print_error(Error.operands, "line " + str(self.order) + " SETCHAR: Wrong type of arguments")
+        if len(var_char[0]) == 0:
+            Error.print_error(Error.string, "line " + str(self.order) + " SETCHAR: Empty string")
+        if len(var_char[0]) > 1:
+            var_char[0] = var_char[0][0]
+        try:
+            var_string[0] = var_string[0][:var_index[0]] + var_char[0] + var_string[0][var_index[0]+1:]
+        except IndexError:
+            Error.print_error(Error.string, "line " + str(self.order) + " SETCHAR: Index out of range")
+        self.store_value_to_variable(self.args[0], var_string[0], "string", program.gf, program.lfs, program.tf)
 
     ##################################### Type  #####################################
     def TYPE(self, program):
