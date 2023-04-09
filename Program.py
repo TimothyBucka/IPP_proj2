@@ -28,25 +28,25 @@ class Program:
         if root.tag != "program":
             Error.print_error(Error.XML_structure, "Missing program tag")
         if root.attrib.get("language") != "IPPcode23":
-            Error.print_error(Error.XML_format, "Wrong language")
+            Error.print_error(Error.XML_structure, "Wrong language")
 
         if len(root.attrib) == 2:
             if root.attrib.get("name") == None and root.attrib.get("description") == None:
-                Error.print_error(Error.XML_format, "Invalid program attributes")
+                Error.print_error(Error.XML_structure, "Invalid program attributes")
         elif len(root.attrib) == 3:
             if root.attrib.get("name") == None or root.attrib.get("description") == None:
-                Error.print_error(Error.XML_format, "Invalid program attributes")
+                Error.print_error(Error.XML_structure, "Invalid program attributes")
         elif len(root.attrib) > 3:
-            Error.print_error(Error.XML_format, "Invalid program attributes")
+            Error.print_error(Error.XML_structure, "Invalid program attributes")
 
         for child in root:
             if child.tag != "instruction":
                 Error.print_error(Error.XML_structure, "Wrong tag instead of instruction")
             if len(child.attrib) == 2:
                 if child.attrib.get("order") == None or child.attrib.get("opcode") == None:
-                    Error.print_error(Error.XML_format, "Invalid instruction attributes")
+                    Error.print_error(Error.XML_structure, "Invalid instruction attributes")
             else:
-                Error.print_error(Error.XML_format, "Invalid number of instruction attributes")
+                Error.print_error(Error.XML_structure, "Invalid number of instruction attributes")
 
             if (child.attrib.get("order").isnumeric() and int(child.attrib.get("order")) > 0) == False:
                 Error.print_error(Error.XML_structure, "Invalid instruction order")
@@ -56,9 +56,9 @@ class Program:
                 if arg.tag != "arg1" and arg.tag != "arg2" and arg.tag != "arg3":
                     Error.print_error(Error.XML_structure, "Wrong argument tag")
                 if len(arg.attrib) != 1:
-                    Error.print_error(Error.XML_format, "Invalid argument attributes")
+                    Error.print_error(Error.XML_structure, "Invalid argument attributes")
                 if arg.attrib.get("type") == None:
-                    Error.print_error(Error.XML_format, "Invalid argument attributes")
+                    Error.print_error(Error.XML_structure, "Invalid argument attributes")
                 args.append(Argument(int(arg.tag[-1]), arg.attrib.get("type"), arg.text))
 
             # 1 arg needed and got arg2 or arg3 instead of arg1
