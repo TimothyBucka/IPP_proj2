@@ -1,4 +1,10 @@
 .vscode
+ipp-2023-tests
+abc
+input
+out
+out.htmlcov
+test.php
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
