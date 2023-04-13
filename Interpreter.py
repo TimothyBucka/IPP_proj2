@@ -8,7 +8,7 @@ class Interpreter:
     def __new__(cls):
         if not hasattr(cls, 'instance'):
             cls.instance = super(Interpreter, cls).__new__(cls)
-        return cls.instance\
+        return cls.instance 
     
     def __init__(self):
         self.args = None
@@ -61,32 +61,3 @@ class Interpreter:
         self.program = Program(self.input_file)
         self.program.parse_XML(self.source_file)
         self.program.run()
-
-# class Frame:
-#     def __init__(self) -> None:
-#         self.data = {
-        
-#         }
-
-# GlobalFrame = Frame()
-# LocalFrames = []
-# TempFrames = []
-
-# class Instruction:
-#     def __init__(self, opcode, arg1, arg2, arg3) -> None:
-#         self.opcode = opcode
-#         self.arg1 = arg1
-#         self.arg2 = arg2
-#         self.arg3 = arg3
-
-#     def run(self, gf, lfs, tfs):
-#         eval("self." + self.opcode + "(gf, lfs, tfs)")
-
-#     def DEFVAR(self, gf, lfs, tfs):
-#         if self.arg1[0] == "var":
-#             gf.data[self.arg1[1]] = None
-#         else:
-#             exit(Error.instruction)
-
-# Instructions = []
-# Instructions.append(Instruction("MOVE", ["var", "GF@var"], ["nil", "nil@nil"], None))

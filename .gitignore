@@ -5,6 +5,10 @@ input
 out
 out.html
 test.php
+*.zip
+is_it_ok.sh
+*.txt
+xbucka00
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

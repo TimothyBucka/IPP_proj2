@@ -59,7 +59,9 @@ class Program:
                     Error.print_error(Error.XML_structure, "Invalid argument attributes")
                 if arg.attrib.get("type") == None:
                     Error.print_error(Error.XML_structure, "Invalid argument attributes")
-                args.append(Argument(int(arg.tag[-1]), arg.attrib.get("type"), arg.text))
+                if arg.text == None:
+                    arg.text = ""
+                args.append(Argument(int(arg.tag[-1]), arg.attrib.get("type"), arg.text.strip()))
 
             # 1 arg needed and got arg2 or arg3 instead of arg1
             if sum([a.order for a in args]) != sum([i for i in range(1, len(args) + 1)]):
@@ -71,7 +73,7 @@ class Program:
             if len([a.order for a in args]) != len(set([a.order for a in args])):
                 Error.print_error(Error.XML_structure, "Invalid argument order")
 
-            instruction = Instruction(int(child.attrib.get("order")), child.attrib.get("opcode"), args)
+            instruction = Instruction(int(child.attrib.get("order")), str.upper(child.attrib.get("opcode")), args)
             if self.check_instruction_args(instruction):
                 self.instructions.append(instruction)
         

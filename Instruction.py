@@ -287,12 +287,17 @@ class Instruction:
         val = self.get_value_from_symb(self.args[0], program.gf, program.lfs, program.tf)
         s = val[0]
 
+        if val[1] == None:
+            Error.print_error(Error.missing_value, "line " + str(self.order) + " WRITE: Wrong type of arguments")
+            
+        if val[1] == "float":
+            s = float.hex(s)
         if val[1] == "bool":
             if s:
                 s = "true"
             else:
                 s = "false"
-        elif val[1] == "nil" or val[1] == None:
+        elif val[1] == "nil":
             s = ""
         
         print(s, end="")
