@@ -11,6 +11,7 @@ is_it_ok.sh
 xbucka00
 int-only
 parse-only
+readme2.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
