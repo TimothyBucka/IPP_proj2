@@ -1,2 +1,2 @@
-# IPP_proj2
-Interpreter in Python
+# Interpret of IPPcode23
+Full documentation [here](readme2.md)
