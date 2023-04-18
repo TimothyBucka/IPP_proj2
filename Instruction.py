@@ -1,30 +1,55 @@
+# author: Timotej Bucka (xbucka00)
+
 from Argument import Argument
 from Error import Error
 from Frame import Frame
 import sys
 
 class Instruction:
+    """
+    Represents one instruction of the program.
+    """
+
     # static variables
-    called_instructions = 0
+    called_instructions = 0 # increments every time an instruction is called
 
     def __init__(self, order, opcode, args) -> None:
+        """
+        Constructor for the Instruction class.
+        @order: order number of the instruction
+        @opcode: opcode of the instruction (MUL, ADD, ...)
+        @args: list of arguments (class Arguments) of the instruction
+        """
+
         self.order = order
         self.opcode = opcode
         self.args = args
         self.nof_args = len(args)
     
     def run(self, program): # will return index of next instruction
+        """
+        Runs the instruction.
+        @program: instance of the Program class (needed for accessing labels and data in frames)
+        @return: None if no jump, position/index of label if jump
+        """
+
         type(self).called_instructions += 1
 
         try:
-            func = getattr(self, self.opcode)
+            func = getattr(self, self.opcode)   # get function by opcode string (MUL -> self.MUL)
         except AttributeError:
             Error.print_error(Error.semantic, "line " + str(self.order) + ": Unknown opcode")
-        next_step = func(program)
+        next_step = func(program)   # calls proper function
 
         return next_step
 
     def split_frame_name(self, variable):
+        """
+        Splits variable into frame and name.
+        @variable: variable in format frame@name eg: GF@var -> frame = GF, name = var
+        @return: frame, name
+        """
+
         frame = variable.split("@")[0]
         name = variable.split("@")[1]
         if frame != "GF" and frame != "LF" and frame != "TF":
@@ -32,6 +57,15 @@ class Instruction:
         return frame, name
 
     def get_value_from_symb(self, symb, gf, lfs, tf):
+        """
+        Gets value from variable or constant.
+        @symb: symbol (class Argument): variable or constant
+        @gf: global frame
+        @lfs: stack of local frames
+        @tf: temporary frame
+        @return: array [value, type] eg: [True, "bool"] or [5, "int"]
+        """
+
         # if constant
         if symb.type != "var":
             if symb.type == "int":
@@ -46,13 +80,14 @@ class Instruction:
                     return [False, "bool"]
             elif symb.type == "string":
                 new_string = ""
+                # convert escape sequences
                 for s in symb.text.split("\\"):
                     if len(s) >= 3 and s[0:3].isnumeric():
                         n = chr(int(s[0:3]))
                         s = n+s[3:]
                     new_string += s
-                    for key, value in {"&lt;": "<", "&gt;": ">", "&amp;": "&"}.items():
-                        new_string = new_string.replace(key, value)
+                for key, value in {"&lt;": "<", "&gt;": ">", "&amp;": "&"}.items():
+                    new_string = new_string.replace(key, value)
                 return [new_string, "string"]
             elif symb.type == "nil":
                 return [None, "nil"]
@@ -80,6 +115,16 @@ class Instruction:
                 return tf.get_variable(name)
         
     def store_value_to_variable(self, variable, value, type, gf, lfs, tf):
+        """
+        Stores value to variable to the proper frame. First gets frame and name from variable.
+        @variable: variable (class Argument)
+        @value: value to store
+        @type: type of the value
+        @gf: global frame
+        @lfs: stack of local frames
+        @tf: temporary frame
+        """
+
         frame, name = self.split_frame_name(variable.text)
         if frame == "GF":
             gf.set_variable(name, value, type)
@@ -150,7 +195,7 @@ class Instruction:
         value, type = program.data_stack.pop()
         self.store_value_to_variable(self.args[0], value, type, program.gf, program.lfs, program.tf)
 
-    ################## Arithmetic, boolean and convertion operations ##################
+    ################## Arithmetic, boolean and conversion operations ##################
     def ADD(self, program):
         val1 = self.get_value_from_symb(self.args[1], program.gf, program.lfs, program.tf)
         val2 = self.get_value_from_symb(self.args[2], program.gf, program.lfs, program.tf)

@@ -9,6 +9,8 @@ test.php
 is_it_ok.sh
 *.txt
 xbucka00
+int-only
+parse-only
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

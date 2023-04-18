@@ -1,3 +1,5 @@
+# author: Timotej Bucka (xbucka00)
+
 from Argument import Argument
 from Error import Error
 from Frame import Frame
@@ -6,7 +8,17 @@ import sys
 import xml.etree.ElementTree as ET
 
 class Program:
+    """
+    Class representing the program represented by XML file.
+    Contains all the instructions and data.
+    """
+
     def __init__(self, instream) -> None:
+        """
+        Constructor for the Program class.
+        @param instream: input stream (stdin/file)
+        """
+
         self.instructions = []
         self.nof_instructions = 0
         self.labels = {}    # {label_name: index in self.instructions}
@@ -19,6 +31,14 @@ class Program:
         sys.stdin = instream
     
     def parse_XML(self, source_file):
+        """
+        Parses the XML file by using ElementTree module.
+        Sets self.instructions to the list of instructions.
+        Parses the labels and sets self.labels to the dictionary of labels.
+        Performs syntactic and semantic checks of the XML file.
+        @param source_file: path to the XML file
+        """
+
         try:
             tree = ET.parse(source_file)
         except ET.ParseError:
@@ -94,6 +114,11 @@ class Program:
                 self.labels[self.instructions[i].args[0].text] = i
 
     def check_instruction_args(self, instruction):
+        """
+        Checks if the instruction has correct number of arguments and if the argument types are correct.
+        @param instruction: instruction to be checked
+        """
+
         rules = {
             "MOVE": ["var", "symb"],
             "CREATEFRAME": [],
@@ -151,9 +176,13 @@ class Program:
         return True
     
     def run(self):
+        """
+        Runs the program by executing instructions in order.
+        """
+        
         instr_num = 0
         while instr_num < self.nof_instructions:
-            next_num = self.instructions[instr_num].run(self)
+            next_num = self.instructions[instr_num].run(self)   # runs instruction at index with Program instance as argument
             if next_num != None:  # change flow of execution (jump)
                 instr_num = next_num
             instr_num += 1
